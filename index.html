@@ -2,69 +2,364 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Prasanna S M</title>
-<meta name="description" content="Prasanna S M, Rust engineer working on a database for AI workloads. Computer Scientist I at Nuvai AI Solutions.">
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Prasanna S M, Rust engineer working on a database for AI workloads: storage engine, RAG, vector search and agent memory. Computer Scientist I at Nuvai AI Solutions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-  :root { --ink: #111; --muted: #666; --line: #e5e5e5; --accent: #2346c9; }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    color: var(--ink); background: #fff; line-height: 1.6; font-size: 16px;
+/* Layout: one left-aligned reading column, label gutter on the left of each section (like a spec sheet), stacks on phones */
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --ink: #131821;
+  --muted: #566070;
+  --line: #dde2ea;
+  --accent: #2346c9;
+  --accent-soft: #e6ebfb;
+  --ok: #1d7a4a;
+
+  --font-display: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.1875rem;
+  --step-2: 1.5rem;
+  --step-4: clamp(2.5rem, 7vw, 4.25rem);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f131a; --surface: #161c25; --ink: #e8ecf2; --muted: #9aa5b5;
+    --line: #262f3c; --accent: #8da4ff; --accent-soft: #1c2540; --ok: #5ccf8e;
+    color-scheme: dark;
   }
-  main { max-width: 640px; margin: 0 auto; padding: 72px 20px 48px; }
-  h1 { font-size: 2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
-  h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 56px 0 16px; font-weight: 600; }
-  p { margin: 0 0 12px; }
-  .muted { color: var(--muted); }
-  a { color: var(--accent); }
-  .links { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 20px; }
-  .links a { text-decoration: none; font-weight: 500; }
-  .links a:hover { text-decoration: underline; }
-  ul { list-style: none; margin: 0; padding: 0; }
-  li { padding: 14px 0; border-top: 1px solid var(--line); }
-  li:last-child { border-bottom: 1px solid var(--line); }
-  .item-title { font-weight: 600; }
-  .item-meta { color: var(--muted); font-size: 0.9rem; }
-  footer { max-width: 640px; margin: 0 auto; padding: 0 20px 48px; color: var(--muted); font-size: 0.85rem; }
+}
+:root[data-theme="dark"] {
+  --bg: #0f131a; --surface: #161c25; --ink: #e8ecf2; --muted: #9aa5b5;
+  --line: #262f3c; --accent: #8da4ff; --accent-soft: #1c2540; --ok: #5ccf8e;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+
+.wrap {
+  max-width: 62rem;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* Top bar */
+.top {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 12px; }
+.mark { font-family: var(--font-mono); font-size: var(--step--1); color: var(--ink); text-decoration: none; font-weight: 500; }
+.top nav { display: flex; gap: 20px; flex-wrap: wrap; }
+.top nav a { color: var(--muted); text-decoration: none; font-size: var(--step--1); font-weight: 500; }
+.top nav a:hover { color: var(--ink); }
+@media (max-width: 560px) { .top nav { display: none; } }
+
+/* Hero */
+.hero { padding-block: 72px 56px; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 48px; align-items: end; }
+@media (max-width: 820px) { .hero { grid-template-columns: 1fr; padding-block: 48px 40px; gap: 32px; } }
+.eyebrow { font-family: var(--font-mono); font-size: var(--step--1); color: var(--muted); letter-spacing: 0.02em; margin: 0 0 16px; }
+.hero h1 { font-size: var(--step-4); font-weight: 800; line-height: 1; letter-spacing: -0.03em; }
+.hero h1 .role { display: block; color: var(--accent); font-weight: 700; font-size: 0.5em; letter-spacing: -0.015em; margin-top: 14px; line-height: 1.15; }
+.lede { font-size: var(--step-1); color: var(--muted); max-width: 36rem; margin: 24px 0 0; line-height: 1.55; }
+.lede strong { color: var(--ink); font-weight: 600; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border-radius: 8px;
+  font: 600 var(--step--1)/1 var(--font-body);
+  text-decoration: none; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  transition: border-color .15s, transform .15s;
+}
+.btn:hover { border-color: var(--ink); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.btn.primary:hover { transform: translateY(-1px); }
+.btn svg { width: 16px; height: 16px; flex: none; }
+
+/* Status card: the one framed object on the page */
+.status {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  overflow: hidden;
+  min-width: 0;
+}
+.status header { display: flex; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--line); color: var(--muted); }
+.status dl { margin: 0; padding: 14px 16px 16px; display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; }
+.status dt { color: var(--muted); }
+.status dd { margin: 0; color: var(--ink); min-width: 0; overflow-wrap: anywhere; }
+.status .ok { color: var(--ok); }
+.status .ok::before { content: "●"; margin-right: 6px; font-size: 0.8em; }
+
+/* Sections */
+section.block { border-top: 1px solid var(--line); padding-block: 56px; display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 32px; }
+@media (max-width: 820px) { section.block { grid-template-columns: 1fr; gap: 20px; padding-block: 40px; } }
+.label { font-family: var(--font-mono); font-size: var(--step--1); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; padding-top: 4px; }
+.content { min-width: 0; max-width: 42rem; }
+
+.job-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px; }
+.job-head h3 { font-size: var(--step-2); font-weight: 700; letter-spacing: -0.01em; }
+.when { font-family: var(--font-mono); font-size: var(--step--1); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.org { color: var(--muted); margin: 4px 0 16px; }
+.org strong { color: var(--ink); font-weight: 600; }
+ul.points { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+ul.points li { position: relative; padding-left: 22px; }
+ul.points li::before { content: "→"; position: absolute; left: 0; color: var(--accent); font-family: var(--font-mono); }
+
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; padding: 0; list-style: none; }
+.tags li { font-family: var(--font-mono); font-size: 0.75rem; padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+
+/* Skills */
+.skills { display: grid; gap: 0; margin: 0; }
+.skills > div { display: grid; grid-template-columns: 10rem minmax(0, 1fr); gap: 16px; padding-block: 14px; border-bottom: 1px solid var(--line); }
+.skills > div:first-child { padding-top: 0; }
+.skills > div:last-child { border-bottom: 0; }
+@media (max-width: 520px) { .skills > div { grid-template-columns: 1fr; gap: 4px; } }
+.skills dt { font-weight: 600; }
+.skills dd { margin: 0; color: var(--muted); }
+
+.edu-grid { display: flex; flex-wrap: wrap; gap: 12px 40px; margin-top: 16px; }
+.stat { display: grid; gap: 2px; }
+.content > .edu-grid { margin-top: 28px; }
+.areas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 32px; }
+@media (max-width: 560px) { .areas { grid-template-columns: 1fr; } }
+.areas h3 { font-size: var(--step-1); font-weight: 700; margin-bottom: 6px; }
+.areas p { margin: 0; color: var(--muted); }
+ul.points strong { font-weight: 600; }
+.stat b { font-family: var(--font-display); font-size: var(--step-2); font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat span { font-size: var(--step--1); color: var(--muted); }
+
+/* Contact */
+.contact-lines { display: grid; gap: 0; margin: 20px 0 0; }
+.contact-lines a, .contact-lines .row {
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  padding-block: 14px; border-bottom: 1px solid var(--line);
+  color: var(--ink); text-decoration: none; min-width: 0;
+}
+.contact-lines .k { font-family: var(--font-mono); font-size: var(--step--1); color: var(--muted); flex: none; width: 6.5rem; }
+.contact-lines .v { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: 500; }
+.contact-lines a:hover .v { color: var(--accent); }
+.copy { font: 500 0.75rem/1 var(--font-mono); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; flex: none; }
+.copy:hover { color: var(--ink); border-color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-block: 24px 40px; color: var(--muted); font-size: var(--step--1); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 </style>
 </head>
 <body>
-<main>
-  <h1>Prasanna S M</h1>
-  <p class="muted">Rust engineer · Bengaluru, India</p>
-  <p>I work on a hybrid database for AI workloads: storage engine, vector search, RAG retrieval and long-term memory for AI agents.</p>
-  <div class="links">
-    <a href="https://drive.google.com/file/d/1KlG3q7KXmbC9uxpF56Rs7edjCL5AZbVn/view?usp=sharing" target="_blank" rel="noopener">Resume</a>
-    <a href="https://github.com/Prasanna37github" target="_blank" rel="noopener">GitHub</a>
-    <a href="https://www.linkedin.com/in/prasanna2005/" target="_blank" rel="noopener">LinkedIn</a>
-    <a href="mailto:prasannasenthilkumaran05@gmail.com">Email</a>
+
+<header class="top">
+  <div class="wrap">
+    <a class="mark" href="#top">prasanna.sm</a>
+    <nav aria-label="Sections">
+      <a href="#experience">Experience</a>
+      <a href="#work">Work</a>
+      <a href="#project">Project</a>
+      <a href="#skills">Skills</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" id="top">
+  <div class="hero">
+    <div>
+      <p class="eyebrow">Software engineer · Bengaluru, India</p>
+      <h1>Prasanna S M
+        <span class="role">I build the Rust engine under AI apps.</span>
+      </h1>
+      <p class="lede">
+        <strong>Computer Scientist I at Nuvai AI Solutions.</strong>
+        I work on a hybrid database built for AI workloads: storage engine, vector search, RAG retrieval and long-term memory for AI agents.
+        I fix the hard bugs, ship the APIs, and write the tests that prove it works.
+      </p>
+      <div class="actions">
+        <a class="btn primary" href="#contact">Get in touch</a>
+        <a class="btn" href="https://drive.google.com/file/d/1KlG3q7KXmbC9uxpF56Rs7edjCL5AZbVn/view?usp=sharing" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14"/></svg>
+          Resume (PDF)
+        </a>
+        <a class="btn" href="https://github.com/Prasanna37github" target="_blank" rel="noopener">GitHub</a>
+        <a class="btn" href="https://www.linkedin.com/in/prasanna2005/" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+    </div>
+
+    <aside class="status" aria-label="Quick facts">
+      <header><span>profile.toml</span><span>v2026</span></header>
+      <dl>
+        <dt>role</dt><dd>Computer Scientist I</dd>
+        <dt>company</dt><dd>Nuvai AI Solutions</dd>
+        <dt>since</dt><dd>Dec 2025</dd>
+        <dt>focus</dt><dd>Databases · RAG · Vector search</dd>
+        <dt>stack</dt><dd>Rust · gRPC · Python</dd>
+        <dt>degree</dt><dd>B.E. CSE, 2026</dd>
+        <dt>cgpa</dt><dd>8.6 / 10</dd>
+        <dt>status</dt><dd class="ok">open to roles</dd>
+      </dl>
+    </aside>
   </div>
 
-  <h2>Work</h2>
-  <ul>
-    <li>
-      <div class="item-title">Computer Scientist I · Nuvai AI Solutions</div>
-      <div class="item-meta">Dec 2025 – Present · Bengaluru</div>
-      <p style="margin:8px 0 0">Core engineer on a Rust hybrid database (graph, vector and key-value storage with ACID transactions). Built agent memory and RAG retrieval fixes, and reported 20+ defects.</p>
-    </li>
-  </ul>
+  <section class="block" id="experience" aria-labelledby="exp-h">
+    <h2 class="label" id="exp-h">Experience</h2>
+    <div class="content">
+      <div class="job-head">
+        <h3>Computer Scientist I</h3>
+        <span class="when">Dec 2025 – Present</span>
+      </div>
+      <p class="org"><strong>Nuvai AI Solutions</strong> · Bengaluru, Karnataka</p>
+      <ul class="points">
+        <li>Core engineer on a <strong>Rust hybrid database for AI workloads</strong> that combines graph, vector and key-value storage under ACID transactions.</li>
+        <li>Hardened the <strong>RAG retrieval pipeline</strong>: connected the document chunk store to the server, made chunk writes and deletes atomic to remove race conditions, and fixed context expansion around search hits.</li>
+        <li>Built <strong>long-term memory for AI agents</strong>: persistent typed-fact storage on the B-tree engine, configurable time-to-live expiry, and a reinforcement API that strengthens facts across sessions.</li>
+        <li>Found and fixed correctness bugs deep in the <strong>storage and query engines</strong>: index key decoding, write-ahead-log safety checks, graph pattern matching and vector ID resolution.</li>
+        <li>Set up <strong>RAG quality evaluation</strong> with the public FRAMES and RAGBench benchmarks to measure answer quality before and after changes.</li>
+        <li>Moved the gRPC / Protobuf API definitions into the main codebase and aligned the Rust SDK, the Python SDK and the REST API contracts.</li>
+        <li>Wrote regression, property-based and end-to-end HTTP tests, and reported 20+ defects with root-cause analysis, including silent data loss and errors hidden as empty results.</li>
+      </ul>
+      <div class="edu-grid" aria-label="Contribution numbers">
+        <div class="stat"><b>19</b><span>pull requests</span></div>
+        <div class="stat"><b>21</b><span>bugs &amp; features filed</span></div>
+        <div class="stat"><b>45+</b><span>commits in Rust</span></div>
+        <div class="stat"><b>6</b><span>engine areas</span></div>
+      </div>
+    </div>
+  </section>
 
-  <h2>Project</h2>
-  <ul>
-    <li>
-      <div class="item-title">Prok: professional networking platform</div>
-      <div class="item-meta">Python · MySQL · React</div>
-      <p style="margin:8px 0 0">A LinkedIn-style social platform with sign-up, profiles and a content feed.</p>
-    </li>
-  </ul>
+  <section class="block" id="work" aria-labelledby="work-h">
+    <h2 class="label" id="work-h">What I work on</h2>
+    <div class="content">
+      <div class="areas">
+        <div><h3>Storage engine</h3><p>B-tree storage, write-ahead log, indexes and ACID transactions. I fix bugs where data could be lost or read wrong.</p></div>
+        <div><h3>RAG &amp; vector search</h3><p>Chunk storage, hybrid search and context expansion that give AI models the right documents.</p></div>
+        <div><h3>Agent memory</h3><p>Long-term memory for AI agents: typed facts that persist, expire on time, and get stronger with use.</p></div>
+        <div><h3>APIs &amp; SDKs</h3><p>gRPC, REST and Protobuf contracts, plus the Rust and Python client SDKs.</p></div>
+        <div><h3>Graph queries</h3><p>Graph traversal and variable-length pattern matching that return complete, correct results.</p></div>
+        <div><h3>Testing &amp; quality</h3><p>Regression, property-based and end-to-end tests, plus benchmarks that measure real quality.</p></div>
+      </div>
+    </div>
+  </section>
 
-  <h2>Skills</h2>
-  <p>Rust, Python, Java, C, JavaScript, SQL · Database internals · RAG and vector search · gRPC, Protobuf, REST · React · Testing and benchmarking</p>
+  <section class="block" id="project" aria-labelledby="proj-h">
+    <h2 class="label" id="proj-h">Project</h2>
+    <div class="content">
+      <div class="job-head">
+        <h3>Prok: professional networking platform</h3>
+      </div>
+      <p class="org">A LinkedIn-style full-stack social platform for networking, sharing posts and career growth.</p>
+      <ul class="tags" aria-label="Built with">
+        <li>Python</li><li>MySQL</li><li>React</li><li>Cursor</li>
+      </ul>
+      <ul class="points">
+        <li>Built a Python backend on a MySQL relational database, with a responsive React frontend.</li>
+        <li>Implemented sign-up and login, user profiles, and a content feed.</li>
+        <li>Used Cursor for code generation, debugging and refactoring to move from idea to working app faster.</li>
+      </ul>
+      <p style="margin:20px 0 0"><a href="https://github.com/Prasanna37github" target="_blank" rel="noopener">See the code on GitHub →</a></p>
+    </div>
+  </section>
 
-  <h2>Education</h2>
-  <p>B.E. Computer Science and Engineering, Government College of Engineering, Erode · 2022 – 2026 · CGPA 8.6 / 10</p>
+  <section class="block" id="skills" aria-labelledby="skills-h">
+    <h2 class="label" id="skills-h">Skills</h2>
+    <div class="content">
+      <dl class="skills">
+        <div><dt>Languages</dt><dd>Rust, Python, Java, C, JavaScript, SQL</dd></div>
+        <div><dt>Systems</dt><dd>Database internals (B-trees, write-ahead logs, indexes), ACID transactions, concurrency</dd></div>
+        <div><dt>AI backend</dt><dd>RAG pipelines, vector &amp; hybrid search, agent memory, RAG evaluation (FRAMES, RAGBench)</dd></div>
+        <div><dt>APIs</dt><dd>gRPC, Protobuf, REST, Axum</dd></div>
+        <div><dt>Frontend</dt><dd>React, Next.js</dd></div>
+        <div><dt>Testing</dt><dd>Property-based, regression, end-to-end and API tests, benchmarking, root-cause analysis</dd></div>
+        <div><dt>Tools</dt><dd>Git, GitHub, Docker, Linux, Postman, VS Code</dd></div>
+        <div><dt>AI tools</dt><dd>Claude Code, Cursor</dd></div>
+        <div><dt>Concepts</dt><dd>Data structures &amp; algorithms, OOP, REST APIs, CI/CD, Agile</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="block" id="education" aria-labelledby="edu-h">
+    <h2 class="label" id="edu-h">Education</h2>
+    <div class="content">
+      <div class="job-head">
+        <h3>B.E. Computer Science and Engineering</h3>
+        <span class="when">2022 – 2026</span>
+      </div>
+      <p class="org"><strong>Government College of Engineering</strong> · Erode, Tamil Nadu</p>
+      <div class="edu-grid">
+        <div class="stat"><b>8.6</b><span>CGPA out of 10</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="contact" aria-labelledby="contact-h">
+    <h2 class="label" id="contact-h">Contact</h2>
+    <div class="content">
+      <h3 style="font-size:var(--step-2)">Hiring for a Rust, backend or AI infrastructure role? Let's talk.</h3>
+      <div class="contact-lines">
+        <div class="row">
+          <span class="k">email</span>
+          <span class="v" id="email">prasannasenthilkumaran05@gmail.com</span>
+          <button class="copy" id="copy-email" type="button">Copy</button>
+        </div>
+        <a href="https://linkedin.com/in/prasanna2005/" target="_blank" rel="noopener"><span class="k">linkedin</span><span class="v">in/prasanna2005</span><span aria-hidden="true">↗</span></a>
+        <a href="https://github.com/Prasanna37github" target="_blank" rel="noopener"><span class="k">github</span><span class="v">Prasanna37github</span><span aria-hidden="true">↗</span></a>
+        <a href="https://leetcode.com/u/prasanna2k05/" target="_blank" rel="noopener"><span class="k">leetcode</span><span class="v">prasanna2k05</span><span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+  </section>
 </main>
-<footer>© 2026 Prasanna S M</footer>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Prasanna S M</span>
+    <span>Tamil Nadu, India</span>
+  </div>
+</footer>
+
+<script>
+  document.getElementById('copy-email').addEventListener('click', function () {
+    var btn = this;
+    var text = document.getElementById('email').textContent;
+    function done(msg) { btn.textContent = msg; setTimeout(function () { btn.textContent = 'Copy'; }, 1600); }
+    function selectIt() {
+      var r = document.createRange(); r.selectNodeContents(document.getElementById('email'));
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      done('Selected');
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done('Copied'); }, selectIt);
+    } else { selectIt(); }
+  });
+</script>
 </body>
 </html>
